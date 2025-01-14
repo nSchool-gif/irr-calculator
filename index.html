@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRR Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, button {
+            margin-top: 5px;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <h1>IRR Calculator</h1>
+    <label for="cashflows">Enter Cash Flows (comma-separated):</label>
+    <input type="text" id="cashflows" placeholder="e.g., -1000, 200, 300, 400">
+
+    <label for="guess">Initial Guess (optional, default is 0.1):</label>
+    <input type="number" id="guess" placeholder="e.g., 0.1">
+
+    <button onclick="calculateIRR()">Calculate IRR</button>
+
+    <div class="result" id="result"></div>
+
+    <script>
+        function calculateIRR() {
+            const cashflows = document.getElementById('cashflows').value.split(',').map(Number);
+            const guess = parseFloat(document.getElementById('guess').value) || 0.1;
+
+            function irr(cashflows, guess) {
+                const maxIterations = 1000;
+                const tolerance = 1e-6;
+
+                let rate = guess;
+                for (let i = 0; i < maxIterations; i++) {
+                    let npv = 0;
+                    let derivative = 0;
+
+                    for (let t = 0; t < cashflows.length; t++) {
+                        npv += cashflows[t] / Math.pow(1 + rate, t);
+                        derivative -= t * cashflows[t] / Math.pow(1 + rate, t + 1);
+                    }
+
+                    const newRate = rate - npv / derivative;
+                    if (Math.abs(newRate - rate) < tolerance) {
+                        return newRate;
+                    }
+
+                    rate = newRate;
+                }
+
+                return null; // IRR not found within iterations
+            }
+
+            const irrValue = irr(cashflows, guess);
+            const resultDiv = document.getElementById('result');
+
+            if (irrValue !== null) {
+                resultDiv.textContent = `Calculated IRR: ${(irrValue * 100).toFixed(2)}%`;
+            } else {
+                resultDiv.textContent = "Could not calculate IRR. Please check your inputs.";
+            }
+        }
+    </script>
+</body>
+</html>
