@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nSchool複利效應與長尾效應計算機</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            background-color: #B5B5C4;
+            border: 1px solid #454560;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            color: #454560;
+        }
+        h1 {
+            text-align: center;
+            color: #956DD3;
+        }
+        .description {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #454560;
+            text-align: center;
+        }
+        .result {
+            margin-top: 30px;
+            font-size: 1.2em;
+            text-align: center;
+            color: #454560;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            width: 100%;
+            background-color: #956DD3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #7C5DBA;
+        }
+        .logo {
+            display: block;
+            margin: 0 auto 20px;
+            max-width: 200px;
+        }
+    </style>
+</head>
+<body>
+    
+    <h1>nSchool複利效應與長尾效應計算機</h1>
+    <div class="description">
+        台股中很多人會投資0050，我們以過往至今年度0050年化報酬率進行計算。假設從2015年開始，每年投入10萬元，股利再投入，直到2024年底全數賣出，來看看這10年的報酬率和總資產會是多少？
+    </div>
+
+    <button onclick="calculateIRR()">計算複利效應與長尾效應</button>
+
+    <div class="result" id="result"></div>
+
+    <script>
+        function calculateIRR() {
+            const annualInvestment = 100000; // 每年投入 10 萬元
+            const annualReturnRate = 0.0952; // 假設最新0050年化報酬率為 9.52%
+            const years = 10; // 投資 10 年
+
+            // 初始化現金流數據，考慮股利再投入
+            const cashflows = [-annualInvestment];
+            let totalShares = 0;
+            let pricePerShare = 50; // 假設2015年初始股價
+            let dividendsPerShare = 2.5; // 每股初始股利
+
+            for (let i = 0; i < years; i++) {
+                // 當年購買的股數
+                const sharesBought = annualInvestment / pricePerShare;
+                totalShares += sharesBought;
+
+                // 當年的股利收入
+                const dividends = totalShares * dividendsPerShare;
+
+                // 下一年的股利再投入購買股票
+                totalShares += dividends / pricePerShare;
+
+                // 股價與股利假設年增長
+                pricePerShare *= (1 + annualReturnRate);
+                dividendsPerShare *= (1 + annualReturnRate);
+
+                cashflows.push(-annualInvestment);
+            }
+
+            // 最後一年的總資產價值
+            const finalValue = totalShares * pricePerShare;
+            cashflows.push(finalValue);
+
+            function irr(cashflows, guess = 0.07) {
+                const maxIterations = 1000;
+                const tolerance = 1e-6;
+
+                let rate = guess;
+                for (let i = 0; i < maxIterations; i++) {
+                    let npv = 0;
+                    let derivative = 0;
+
+                    for (let t = 0; t < cashflows.length; t++) {
+                        npv += cashflows[t] / Math.pow(1 + rate, t);
+                        derivative -= t * cashflows[t] / Math.pow(1 + rate, t + 1);
+                    }
+
+                    const newRate = rate - npv / derivative;
+                    if (Math.abs(newRate - rate) < tolerance) {
+                        return newRate;
+                    }
+
+                    rate = newRate;
+                }
+
+                return null; // IRR not found within iterations
+            }
+
+            const irrValue = irr(cashflows);
+            const totalInvestment = annualInvestment * years;
+            const profit = finalValue - totalInvestment;
+
+            const resultDiv = document.getElementById('result');
+            if (irrValue !== null) {
+                resultDiv.innerHTML = `
+                    <p>計算結果：</p>
+                    <p>複利效應與長尾效應 IRR： ${(irrValue * 100).toFixed(2)}%</p>
+                    <p>期間投入的總資金： ${totalInvestment.toLocaleString()} 新台幣</p>
+                    <p>總獲利： ${profit.toLocaleString()} 新台幣</p>
+                    <p>總資產： ${finalValue.toLocaleString()} 新台幣</p>
+                `;
+            } else {
+                resultDiv.textContent = "無法計算複利效應與長尾效應，請檢查輸入的數值。";
+            }
+        }
+    </script>
+</body>
+</html>
